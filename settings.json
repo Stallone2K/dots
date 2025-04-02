@@ -1,0 +1,18 @@
+{
+  // Vim KeyBindings
+
+  "vim.insertModeKeyBindingsNonRecursive": [
+    {
+      "before": [":", ":"],
+      "after": ["<esc>"]
+    },
+
+    {
+      "before": ["j", "k"],
+      "after": ["<esc>"]
+    }
+  ],
+  "[javascript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  }
+}
