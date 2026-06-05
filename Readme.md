@@ -86,7 +86,7 @@
 | `Alt + M` | Music (RMPC) |
 | `Alt + /` | System Monitor (btop) |
 
-> Full list in [`.config/hypr/bindings.conf`](.config/hypr/bindings.conf)
+> Full List In [`.config/hypr/bindings.conf`](.config/hypr/bindings.conf)
 
 ---
 
