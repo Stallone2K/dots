@@ -1,0 +1,35 @@
+#!/bin/bash
+
+# Exit early if screensaver is already running
+pgrep -x gluqlo && exit 0
+
+focused=$(hyprctl monitors -j | jq -r '.[] | select(.focused == true).name')
+monitors=$(hyprctl monitors -j | jq -r '.[] | .name')
+
+count_before=$(hyprctl clients -j | jq '[.[] | select(.class == "gluqlo")] | length')
+
+for m in $monitors; do
+  hyprctl dispatch focusmonitor "$m"
+  sleep 0.3
+  /usr/libexec/xscreensaver/gluqlo -ampm -r 1920x1080 &
+
+  # Wait until the new window actually appears
+  for _ in {1..30}; do
+    count_now=$(hyprctl clients -j | jq '[.[] | select(.class == "gluqlo")] | length')
+    [[ "$count_now" -gt "$count_before" ]] && break
+    sleep 0.1
+  done
+  count_before=$count_now
+done
+
+hyprctl dispatch focusmonitor "$focused"
+
+# Background input watcher: any key/mouse event dismisses all instances
+(
+  sleep 4  # let everything settle
+  # Flush any leftover input events from the launch
+  cat /dev/input/event* 2>/dev/null | timeout 1 cat >/dev/null 2>&1
+  # Now watch for real user input
+  cat /dev/input/event* 2>/dev/null | head -c 1 >/dev/null
+  pkill -x gluqlo 2>/dev/null
+) &

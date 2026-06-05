@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Flip Clock</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@700&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    overflow: hidden;
+    cursor: none;
+    user-select: none;
+    font-family: 'SF Pro Display', 'Inter', -apple-system, sans-serif;
+  }
+
+  .clock {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+  }
+
+  .card {
+    position: relative;
+    background: #1a1a1a;
+    border-radius: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  .card-hour {
+    width: 280px;
+    height: 380px;
+  }
+
+  .card-minute {
+    width: 380px;
+    height: 380px;
+  }
+
+  /* horizontal split line */
+  .card::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 2;
+  }
+
+  /* small notches on the split line */
+  .card::before {
+    content: '';
+    position: absolute;
+    top: calc(50% - 8px);
+    left: -1px;
+    width: 10px;
+    height: 18px;
+    background: #000;
+    border-radius: 0 8px 8px 0;
+    z-index: 3;
+  }
+
+  .notch-right {
+    position: absolute;
+    top: calc(50% - 8px);
+    right: -1px;
+    width: 10px;
+    height: 18px;
+    background: #000;
+    border-radius: 8px 0 0 8px;
+    z-index: 3;
+  }
+
+  .digit {
+    font-size: 240px;
+    font-weight: 700;
+    color: #c8c8c8;
+    line-height: 1;
+    letter-spacing: -4px;
+    z-index: 1;
+  }
+
+  .period {
+    position: absolute;
+    bottom: 42px;
+    left: 36px;
+    font-size: 32px;
+    font-weight: 700;
+    color: #666;
+    letter-spacing: 2px;
+    z-index: 1;
+  }
+
+  /* flip animation */
+  .card.flip .digit {
+    animation: flipPulse 0.4s ease-in-out;
+  }
+
+  @keyframes flipPulse {
+    0%   { transform: scaleY(1); opacity: 1; }
+    40%  { transform: scaleY(0.85); opacity: 0.6; }
+    100% { transform: scaleY(1); opacity: 1; }
+  }
+
+  /* subtle top/bottom gradient for depth */
+  .shade-top, .shade-bottom {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 50%;
+    z-index: 1;
+    pointer-events: none;
+  }
+
+  .shade-top {
+    top: 0;
+    background: linear-gradient(to bottom, rgba(255,255,255,0.03), transparent);
+  }
+
+  .shade-bottom {
+    bottom: 0;
+    background: linear-gradient(to top, rgba(0,0,0,0.15), transparent);
+  }
+</style>
+</head>
+<body>
+  <div class="clock">
+    <div class="card card-hour" id="hour-card">
+      <div class="shade-top"></div>
+      <div class="shade-bottom"></div>
+      <div class="notch-right"></div>
+      <span class="digit" id="hour">12</span>
+      <span class="period" id="period">AM</span>
+    </div>
+    <div class="card card-minute" id="minute-card">
+      <div class="shade-top"></div>
+      <div class="shade-bottom"></div>
+      <div class="notch-right"></div>
+      <span class="digit" id="minute">00</span>
+    </div>
+  </div>
+
+  <script>
+    const hourEl = document.getElementById('hour');
+    const minuteEl = document.getElementById('minute');
+    const periodEl = document.getElementById('period');
+    const hourCard = document.getElementById('hour-card');
+    const minuteCard = document.getElementById('minute-card');
+
+    let lastHour = '', lastMinute = '';
+
+    function updateClock() {
+      const now = new Date();
+      let h = now.getHours();
+      const m = String(now.getMinutes()).padStart(2, '0');
+      const ampm = h >= 12 ? 'PM' : 'AM';
+
+      h = h % 12 || 12;
+      const hStr = String(h);
+
+      if (hStr !== lastHour) {
+        hourEl.textContent = hStr;
+        periodEl.textContent = ampm;
+        hourCard.classList.remove('flip');
+        void hourCard.offsetWidth;
+        hourCard.classList.add('flip');
+        lastHour = hStr;
+      }
+
+      if (m !== lastMinute) {
+        minuteEl.textContent = m;
+        minuteCard.classList.remove('flip');
+        void minuteCard.offsetWidth;
+        minuteCard.classList.add('flip');
+        lastMinute = m;
+      }
+    }
+
+    updateClock();
+    setInterval(updateClock, 1000);
+  </script>
+</body>
+</html>

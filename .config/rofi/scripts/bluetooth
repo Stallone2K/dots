@@ -1,0 +1,120 @@
+#!/bin/bash
+# bluetooth device manager using rofi and bluetoothctl
+
+# --- helpers ---
+
+power_on() {
+    bluetoothctl show | grep -q "Powered: yes"
+}
+
+device_connected() {
+    bluetoothctl info "$1" | grep -q "Connected: yes"
+}
+
+get_device_icon() {
+    local mac="$1"
+    local icon=$(bluetoothctl info "$mac" | grep "Icon:" | awk '{print $2}')
+    case "$icon" in
+        audio-headset|audio-headphones) echo "󰋋" ;;
+        audio-card)                     echo "󰓃" ;;
+        input-keyboard)                 echo "󰌌" ;;
+        input-mouse)                    echo "󰍽" ;;
+        input-gaming)                   echo "󰊖" ;;
+        phone)                          echo "󰏲" ;;
+        computer)                       echo "󰍹" ;;
+        video-display)                  echo "󰍹" ;;
+        *)                              echo "󰂯" ;;
+    esac
+}
+
+# --- device submenu ---
+
+device_menu() {
+    local mac="$1"
+    local name="$2"
+
+    if device_connected "$mac"; then
+        conn="󰄬  Connected"
+        conn_toggle="󰂲  Disconnect"
+    else
+        conn="󰅖  Not connected"
+        conn_toggle="󰂯  Connect"
+    fi
+
+    chosen=$(echo -e "$conn_toggle\n󱘖  Remove device\n󰁍  Back" | rofi -dmenu -i -p "$name")
+    [[ -z "$chosen" ]] && exit 0
+
+    case "$chosen" in
+        "󰂯  Connect")
+            notify-send "Bluetooth" "Connecting to $name..."
+            bluetoothctl connect "$mac" && notify-send "Bluetooth" "Connected to $name" || notify-send "Bluetooth" "Failed to connect to $name"
+            ;;
+        "󰂲  Disconnect")
+            bluetoothctl disconnect "$mac" && notify-send "Bluetooth" "Disconnected from $name"
+            ;;
+        "󱘖  Remove device")
+            bluetoothctl remove "$mac" && notify-send "Bluetooth" "Removed $name"
+            ;;
+        "󰁍  Back")
+            main_menu
+            ;;
+    esac
+}
+
+# --- main menu ---
+
+main_menu() {
+    if power_on; then
+        toggle="󰂲  Turn Off"
+
+        # build device list with icons
+        device_list=""
+        while IFS= read -r line; do
+            mac=$(echo "$line" | awk '{print $2}')
+            name=$(echo "$line" | cut -d ' ' -f 3-)
+            [[ -z "$mac" || -z "$name" ]] && continue
+            icon=$(get_device_icon "$mac")
+            if device_connected "$mac"; then
+                device_list+="$icon  $name  󰄬\n"
+            else
+                device_list+="$icon  $name\n"
+            fi
+        done <<< "$(bluetoothctl devices | grep Device)"
+
+        scan_label="󰑐  Scan for devices"
+        options="${device_list}${scan_label}\n$toggle"
+    else
+        toggle="󰂯  Turn On"
+        options="$toggle"
+    fi
+
+    chosen=$(echo -e "$options" | sed '/^$/d' | rofi -dmenu -i -p "Bluetooth")
+    [[ -z "$chosen" ]] && exit 0
+
+    case "$chosen" in
+        "󰂯  Turn On")
+            rfkill list bluetooth | grep -q 'blocked: yes' && rfkill unblock bluetooth && sleep 1
+            bluetoothctl power on && notify-send "Bluetooth" "Powered on"
+            main_menu
+            ;;
+        "󰂲  Turn Off")
+            bluetoothctl power off && notify-send "Bluetooth" "Powered off"
+            ;;
+        "󰑐  Scan for devices")
+            notify-send "Bluetooth" "Scanning..."
+            bluetoothctl --timeout 5 scan on &>/dev/null
+            main_menu
+            ;;
+        *)
+            # strip icon prefix and connected indicator to get device name
+            selected=$(echo "$chosen" | sed 's/^[^ ]* *//;s/ *󰄬$//')
+            device_line=$(bluetoothctl devices | grep "$selected")
+            [[ -z "$device_line" ]] && exit 0
+            mac=$(echo "$device_line" | awk '{print $2}')
+            name=$(echo "$device_line" | cut -d ' ' -f 3-)
+            device_menu "$mac" "$name"
+            ;;
+    esac
+}
+
+main_menu

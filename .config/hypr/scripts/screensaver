@@ -1,0 +1,5 @@
+#!/bin/bash
+
+# Dismiss all gluqlo screensaver instances
+hyprctl keyword cursor:invisible false
+pkill -x gluqlo 2>/dev/null
