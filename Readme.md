@@ -4,7 +4,7 @@
 
 <br/>
 
-**Arch + Hyprland on a Razer Blade 15**
+**Arch Linux (Razer Blade 15)**
 
 <br/>
 
