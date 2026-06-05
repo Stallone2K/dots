@@ -10,6 +10,10 @@
 
 <img src="assets/desktop.png" alt="Clean Desktop" width="100%"/>
 
+<br/>
+
+<img src="assets/tiled.png" alt="Tiled Workflow" width="100%"/>
+
 </div>
 
 ---
